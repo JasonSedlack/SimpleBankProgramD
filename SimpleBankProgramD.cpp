@@ -16,6 +16,10 @@ public:
 
 	virtual ~Account() {};
 
+	double getBalance() const {
+		return balance;
+	}
+
 	virtual void deposit(double amount) {
 		balance += amount;
 		cout << "Deposit: $" << amount << " to " << owner << "'s account. New balance $" << balance << endl;
@@ -46,6 +50,20 @@ public:
 	}
 };
 
+class SavingsAccount : public Account {
+private:
+	static const double INTEREST_RATE;
+
+public:
+	SavingsAccount(const string& owner, double balance)
+		: Account(owner, balance) {}
+
+	void applyInterest() {
+		double interest = balance * INTEREST_RATE;
+		deposit(interest);
+	}
+};
+
 class CheckingAccount : public Account {
 public:
 	CheckingAccount(const string& owner, double balance)
@@ -57,12 +75,16 @@ private:
 	static const double MAX_WITHDRAWAL_LIMIT;
 
 public:
-	void withdraw(double amount) override {
+	IndividualAccount(const string& owner, double balance)
+		: CheckingAccount(owner, balance) {}
+
+	bool withdraw(double amount) override {
 		if (amount <= MAX_WITHDRAWAL_LIMIT) {
-			Account::withdraw(amount);
+			return Account::withdraw(amount);
 		}
 		else {
 			cout << "Withdrawal limit exceeded for " << owner << "'s individual checking account. Withdrawal failed. " << endl;
+			return false;
 		}
 	}
 };
@@ -73,23 +95,20 @@ public:
 		: CheckingAccount(owner, balance) {}
 };
 
-
-const double IndividualAccount::MAX_WITHDRAWAL_LIMIT = 1000.0;
-
 class Bank {
 private:
 	string name;
-	vector < Account* accounts;
+	vector <Account*> accounts;
 
 public:
 	Bank(const string& name)
 		: name(name) {}
-
+	/*
 	~Bank() {
 		for (Account* account : accounts) {
 			delete account;
 		}
-	}
+	}*/
 
 	void addAccount(Account* account) {
 		accounts.push_back(account);
@@ -125,8 +144,59 @@ public:
 	}
 };
 
+const double IndividualAccount::MAX_WITHDRAWAL_LIMIT = 1000.0;
+const double SavingsAccount::INTEREST_RATE = 0.05;
+
 int main() {
 
+	// create my bank
+	Bank bank("Jason's Bank");
+
+	// create accounts
+	Account* account1 = new Account("Superman", 1000);
+	Account* account2 = new CheckingAccount("The Flash", 2000);
+	Account* account3 = new SavingsAccount("Batman", 3000);
+	Account* account4 = new IndividualAccount("Hulk", 4000);
+	Account* account5 = new MoneyMarketAccount("Aquaman", 5000);
+
+	bank.addAccount(account1);
+	bank.addAccount(account2);
+	bank.addAccount(account3);
+	bank.addAccount(account4);
+	bank.addAccount(account5);
+
+	bool allTestsPassed = true;
+
+	// deposit, withdrawal, transfer
+
+	bank.depositToAccount(0, 5);
+	if (account1->getBalance() != 1005) {
+		cout << "Test failed on account 1 deposit" << endl;
+		allTestsPassed = false;
+	}
+
+
+	bank.withdrawFromAccount(0, 5);
+	if (account1->getBalance() != 1000) {
+		cout << "Test failed on account 1 withdrawal" << endl;
+		allTestsPassed = false;
+	}
+
+	// needs debug
+	bank.transferBetweenAccounts(0, 1, 5);
+	if (account1->getBalance() != 995 || account2->getBalance() != 2005) {
+		cout << account1->getBalance() << account2->getBalance();
+		cout << "Test transfer failed on account 1 to account 2" << endl;
+		allTestsPassed = false;
+	}
+
+
+	// clean up
+	delete account1;
+	delete account2;
+	delete account3;
+	delete account4;
+	delete account5;
 
 
 	return 0;
