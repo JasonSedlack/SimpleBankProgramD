@@ -137,6 +137,7 @@ public:
 			destinationIndex >= 0 && destinationIndex < accounts.size()) {
 			Account* source = accounts[sourceIndex];
 			Account* destination = accounts[destinationIndex];
+			source->transfer(*destination, amount);
 		}
 		else {
 			cout << "Account Index out of bounds" << endl;
